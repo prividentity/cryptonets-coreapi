@@ -5,6 +5,8 @@ import * as process from "process";
 import { PNG } from "pngjs";
 import request from "request-promise";
 
+import logger from "../helpers/logger";
+
 import { decrypt } from "./privid_crypto";
 
 export const decryptNativeEmbedding = (
@@ -56,11 +58,22 @@ export const callServer = async (
 
 export const processOriginalImage = async (
   originalImageJSON: any,
+  apiKey: string,
+  encryptionVersion: number,
   mode: string
 ): Promise<void> => {
   // Logic for handling the original image from the payload
   try {
-    const binaryImage: Buffer = Buffer.from(originalImageJSON.data, "base64");
+    const decryptedData: string | boolean = decrypt(
+      apiKey,
+      originalImageJSON.data,
+      encryptionVersion
+    );
+    if (typeof decryptedData === "boolean") {
+      logger.info("Image decryption failed.");
+      return;
+    }
+    const binaryImage: Buffer = Buffer.from(decryptedData, "base64");
     const timestampNow: number = Date.parse(new Date().toString());
     const img_png: PNG = new PNG({
       width: originalImageJSON.width,

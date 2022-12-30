@@ -59,7 +59,12 @@ async function enrollRoute(req: any, res: any) {
     if (req.body.features) encryptedData = req.body.features;
     // Logic for handling the original image
     if (req.body.original_image) {
-      await processOriginalImage(req.body.original_image, "enroll");
+      await processOriginalImage(
+        req.body.original_image,
+        req.body.api_key,
+        req.headers["x-encryption-version"],
+        "enroll"
+      );
     }
 
     const decryptedData = decryptNativeEmbedding(
