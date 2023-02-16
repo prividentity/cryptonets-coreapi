@@ -2,7 +2,6 @@ import * as fs from "fs";
 import path from "path";
 import * as process from "process";
 
-import { PNG } from "pngjs";
 import request from "request-promise";
 
 import logger from "../helpers/logger";
@@ -75,22 +74,10 @@ export const processOriginalImage = async (
     }
     const binaryImage: Buffer = Buffer.from(decryptedData, "base64");
     const timestampNow: number = Date.parse(new Date().toString());
-    const img_png: PNG = new PNG({
-      width: originalImageJSON.width,
-      height: originalImageJSON.height,
-      inputColorType: 2,
-    });
-    img_png.data = Buffer.from(binaryImage);
-    img_png
-      .pack()
-      .pipe(
-        fs.createWriteStream(
-          `${path.resolve(
+    fs.writeFileSync(`${path.resolve(
             process.cwd(),
             "src/images"
-          )}/${mode}_${timestampNow}.png`
-        )
-      );
+          )}/${mode}_${timestampNow}.png`, binaryImage);
   } catch (e) {
     console.log(e);
   }
