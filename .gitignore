@@ -10,3 +10,4 @@ dist/
 .cache/
 *.log
 src/images
+yarn.lock

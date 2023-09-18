@@ -1,35 +1,40 @@
 import express from "express";
 import request from "request-promise";
 
-import { decryptNativeEmbedding } from "../utils/helperUtils";
+import {decryptPrivateData, encryptPrivateData} from "../utils/helperUtils";
 
 async function deleteRoute(req: any, res: any) {
   try {
     if (!req.body.api_key) {
       return res.status(400).json({ status: -1, message: "Missing api key" });
     }
-    if (!req.body.uuid) {
-      return res.status(400).json({ status: -1, message: "Missing UUID" });
+    if (!req.body.puid) {
+      return res.status(400).json({ status: -1, message: "Missing PUID" });
     }
-    const decryptedData = decryptNativeEmbedding(
+    const decryptedData = decryptPrivateData(
       req.body.api_key,
-      req.body.uuid,
+      req.body.puid,
       req.headers["x-encryption-version"],
       false
     );
     if (typeof decryptedData === "boolean") {
       return res.status(400).json({ status: -1, message: "Encryption Failed" });
     }
+    const payloadData = encryptPrivateData(decryptedData, req.headers["x-encryption-version"], false);
+    if (typeof payloadData === "boolean") {
+        return res.status(400).json({status: -1, message: "Encryption Failed"});
+    }
     const result: any = await request({
       method: "post",
-      uri: `${process.env.PI_SERVER_1FA}/delete_subject`,
+      uri: `${process.env.API_URL}/deleteUser`,
       headers: {
         "Content-Type": "application/json",
         "X-API-KEY": process.env.API_KEY,
+        "x-encryption-version": 2
       },
       body: JSON.stringify({
         api_key: process.env.API_KEY,
-        uuid: decryptedData,
+        puid: payloadData,
       }),
     });
     const resultParsed: any = JSON.parse(result);

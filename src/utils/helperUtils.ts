@@ -6,19 +6,34 @@ import request from "request-promise";
 
 import logger from "../helpers/logger";
 
-import { decrypt } from "./privid_crypto";
+import {decrypt, encrypt} from "./privid_crypto";
 
-export const decryptNativeEmbedding = (
+export const encryptPrivateData = (
+  payloadData: string,
+  encryptionVersion: number,
+  parseJson: boolean = true
+): any | boolean => {
+  try {
+    const encryptedData: string | boolean = encrypt(
+      process.env.API_KEY,
+      parseJson ? JSON.stringify(payloadData) : payloadData,
+      encryptionVersion
+    );
+    if (typeof encryptedData == "boolean") {
+      return false;
+    }
+    return encryptedData;
+  } catch (e) {
+    return false;
+  }
+};
+
+export const decryptPrivateData = (
   apiKey: string,
   encryptedData: string,
-  encryptionVersion: number,
+  encryptionVersion: number = 2,
   parseJson = true
 ): any | boolean => {
-  const decryptedData: string | boolean = decrypt(apiKey, encryptedData);
-  if (typeof decryptedData == "boolean") {
-    return decryptedData;
-  }
-
   try {
     const decryptedData: string | boolean = decrypt(
       apiKey,
@@ -42,10 +57,11 @@ export const callServer = async (
   try {
     return await request({
       method: "post",
-      uri: `${process.env.PI_SERVER_1FA}/${mode}`,
+      uri: `${process.env.API_URL}/${mode}`,
       headers: {
         "Content-Type": "application/json",
         "X-API-KEY": process.env.API_KEY,
+        "x-encryption-version": 2
       },
       body: JSON.stringify(requestPayload),
     });
